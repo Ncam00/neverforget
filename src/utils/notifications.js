@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 
 export async function registerForNotifications() {
+  if (Platform.OS === 'web') return false;
   if (!Device.isDevice) return false;
 
   if (Platform.OS === 'android') {
@@ -31,11 +32,19 @@ export async function registerForNotifications() {
   return finalStatus === 'granted';
 }
 
+// Returns { id, followUpId } — primary reminder + smart follow-up 1hr later
 export async function scheduleTaskNotification(task) {
-  if (!task.reminderTime) return null;
+  if (!task.reminderTime || Platform.OS === 'web') return null;
 
+  // Cancel previous notifications
   if (task.notificationId) {
-    await Notifications.cancelScheduledNotificationAsync(task.notificationId).catch(() => {});
+    const prev = task.notificationId;
+    if (typeof prev === 'string') {
+      await Notifications.cancelScheduledNotificationAsync(prev).catch(() => {});
+    } else if (prev?.id) {
+      await Notifications.cancelScheduledNotificationAsync(prev.id).catch(() => {});
+      if (prev.followUpId) await Notifications.cancelScheduledNotificationAsync(prev.followUpId).catch(() => {});
+    }
   }
 
   const [hours, minutes] = task.reminderTime.split(':').map(Number);
@@ -43,7 +52,7 @@ export async function scheduleTaskNotification(task) {
   try {
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: '⏰ NeverForget Reminder',
+        title: '⏰ NeverForget',
         body: `Don't forget: "${task.title}"`,
         data: { taskId: task.id },
         sound: true,
@@ -54,7 +63,27 @@ export async function scheduleTaskNotification(task) {
         minute: minutes,
       },
     });
-    return id;
+
+    // Smart follow-up 1 hour later
+    let followUpId = null;
+    const followUpHour = hours + 1;
+    if (followUpHour < 24) {
+      followUpId = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🐘 Still pending!',
+          body: `"${task.title}" still needs to be completed!`,
+          data: { taskId: task.id, type: 'followup' },
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: followUpHour,
+          minute: minutes,
+        },
+      });
+    }
+
+    return { id, followUpId };
   } catch (e) {
     console.warn('Could not schedule notification:', e);
     return null;
@@ -62,6 +91,7 @@ export async function scheduleTaskNotification(task) {
 }
 
 export async function scheduleCarryOverNotification(pendingCount) {
+  if (Platform.OS === 'web') return;
   try {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     for (const n of scheduled) {
@@ -69,13 +99,11 @@ export async function scheduleCarryOverNotification(pendingCount) {
         await Notifications.cancelScheduledNotificationAsync(n.identifier);
       }
     }
-
     if (pendingCount === 0) return;
-
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '🐘 NeverForget — Tasks Pending',
-        body: `You have ${pendingCount} task${pendingCount > 1 ? 's' : ''} that still need${pendingCount === 1 ? 's' : ''} to be done!`,
+        body: `You still have ${pendingCount} task${pendingCount > 1 ? 's' : ''} to complete today!`,
         data: { type: 'carryover' },
         sound: true,
       },
@@ -91,6 +119,11 @@ export async function scheduleCarryOverNotification(pendingCount) {
 }
 
 export async function cancelTaskNotification(notificationId) {
-  if (!notificationId) return;
-  await Notifications.cancelScheduledNotificationAsync(notificationId).catch(() => {});
+  if (Platform.OS === 'web' || !notificationId) return;
+  if (typeof notificationId === 'string') {
+    await Notifications.cancelScheduledNotificationAsync(notificationId).catch(() => {});
+  } else if (typeof notificationId === 'object') {
+    if (notificationId.id) await Notifications.cancelScheduledNotificationAsync(notificationId.id).catch(() => {});
+    if (notificationId.followUpId) await Notifications.cancelScheduledNotificationAsync(notificationId.followUpId).catch(() => {});
+  }
 }

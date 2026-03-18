@@ -154,22 +154,22 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
+      {/* Top action bar — outside FlatList so it always stretches full width */}
+      <View style={[styles.topBar, { backgroundColor: theme.bg }]}>
+        <TouchableOpacity onPress={() => navigation.navigate('Themes')} style={styles.topBtn}>
+          <Text style={{ color: theme.primary, fontSize: 22 }}>🎨</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Archive')} style={styles.topBtn}>
+          <Text style={{ color: theme.primary, fontSize: 22 }}>📦</Text>
+        </TouchableOpacity>
+      </View>
+
       <FlatList
         data={sortedTasks}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
           <View>
-            {/* Top action bar */}
-            <View style={styles.topBar}>
-              <TouchableOpacity onPress={() => navigation.navigate('Themes')} style={styles.topBtn}>
-                <Text style={{ color: theme.primary, fontSize: 22 }}>🎨</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('Archive')} style={styles.topBtn}>
-                <Text style={{ color: theme.primary, fontSize: 22 }}>📦</Text>
-              </TouchableOpacity>
-            </View>
-
             {/* Header */}
             <View style={styles.header}>
               <Logo size={90} color={theme.primary} />
@@ -200,7 +200,7 @@ export default function HomeScreen({ navigation }) {
 
               {/* Weekly summary button */}
               <TouchableOpacity
-                style={[styles.weeklyBtn, { borderColor: theme.border }]}
+                style={[styles.weeklyBtn, { borderColor: theme.primary + '50' }]}
                 onPress={() => navigation.navigate('Weekly')}
               >
                 <Text style={{ color: theme.primary, fontSize: 14, fontWeight: '700' }}>
@@ -268,7 +268,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   list: { padding: 16, paddingBottom: 110 },
-  topBar: { flexDirection: 'row', justifyContent: 'flex-end', gap: 4, paddingVertical: 4 },
+  topBar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 8, paddingVertical: 4 },
   topBtn: { padding: 8 },
   header: { alignItems: 'center', paddingVertical: 12, marginBottom: 8 },
   appName: { fontSize: 28, fontWeight: '800', letterSpacing: 3, marginTop: 8, textTransform: 'uppercase' },

@@ -92,6 +92,7 @@ export async function scheduleTaskNotification(task) {
 
 export async function scheduleCarryOverNotification(pendingCount) {
   if (Platform.OS === 'web') return;
+  if (!Notifications.getAllScheduledNotificationsAsync) return;
   try {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     for (const n of scheduled) {

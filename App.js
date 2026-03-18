@@ -20,12 +20,8 @@ Notifications.setNotificationHandler({
 const GOLD = '#C4A000';
 
 export default function App() {
-  // Handle notification taps
   useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener(() => {
-      // Navigate to home when user taps a notification
-      // (NavigationContainer ref can be added for deep linking)
-    });
+    const sub = Notifications.addNotificationResponseReceivedListener(() => {});
     return () => sub.remove();
   }, []);
 

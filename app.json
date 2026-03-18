@@ -30,24 +30,7 @@
         "USE_EXACT_ALARM",
         "POST_NOTIFICATIONS",
         "VIBRATE"
-      ],
-      "googleServicesFile": "./google-services.json"
-    },
-    "plugins": [
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#C4A000",
-          "sounds": [],
-          "mode": "production"
-        }
       ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "your-eas-project-id"
-      }
     }
   }
 }

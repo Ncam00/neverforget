@@ -23,6 +23,8 @@ export default function HomeScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
   const [notifGranted, setNotifGranted] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [filter, setFilter] = useState('all'); // 'all' | 'high' | 'medium' | 'low'
+  const [focusMode, setFocusMode] = useState(false);
   const prevAllDone = useRef(false);
 
   useEffect(() => {
@@ -126,6 +128,22 @@ export default function HomeScreen({ navigation }) {
     await saveTasks(updated);
   }
 
+  async function handleEdit(id) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    navigation.navigate('AddTask', {
+      task,
+      onAdd: null,
+      onEdit: async ({ title, note, reminderTime, priority, dueDate }) => {
+        const updated = tasks.map((t) =>
+          t.id === id ? { ...t, title, note, reminderTime, priority, dueDate } : t
+        );
+        setTasks(updated);
+        await saveTasks(updated);
+      },
+    });
+  }
+
   async function handleArchive(id) {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
@@ -139,13 +157,19 @@ export default function HomeScreen({ navigation }) {
 
   // Sort: pinned first, then by priority, then completed last
   const priorityOrder = { high: 0, medium: 1, low: 2 };
-  const sortedTasks = [...tasks].sort((a, b) => {
-    if (a.completed !== b.completed) return a.completed ? 1 : -1;
-    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-    const pa = priorityOrder[a.priority] ?? 3;
-    const pb = priorityOrder[b.priority] ?? 3;
-    return pa - pb;
-  });
+  const sortedTasks = [...tasks]
+    .filter((t) => {
+      if (focusMode && t.completed) return false;
+      if (filter !== 'all' && t.priority !== filter) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (a.completed !== b.completed) return a.completed ? 1 : -1;
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      const pa = priorityOrder[a.priority] ?? 3;
+      const pb = priorityOrder[b.priority] ?? 3;
+      return pa - pb;
+    });
 
   const pending = tasks.filter((t) => !t.completed);
   const done = tasks.filter((t) => t.completed);
@@ -209,6 +233,30 @@ export default function HomeScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
+            {/* Filter chips + Focus mode */}
+            <View style={styles.filterRow}>
+              {[
+                { key: 'all', label: 'All' },
+                { key: 'high', label: '🔴' },
+                { key: 'medium', label: '🟡' },
+                { key: 'low', label: '🟢' },
+              ].map((f) => (
+                <TouchableOpacity
+                  key={f.key}
+                  style={[styles.filterChip, { borderColor: filter === f.key ? theme.primary : theme.border, backgroundColor: filter === f.key ? theme.primary + '20' : 'transparent' }]}
+                  onPress={() => setFilter(filter === f.key && f.key !== 'all' ? 'all' : f.key)}
+                >
+                  <Text style={{ color: filter === f.key ? theme.primary : theme.subtext, fontSize: 13, fontWeight: '600' }}>{f.label}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={[styles.filterChip, { borderColor: focusMode ? theme.primary : theme.border, backgroundColor: focusMode ? theme.primary + '20' : 'transparent', marginLeft: 'auto' }]}
+                onPress={() => setFocusMode(!focusMode)}
+              >
+                <Text style={{ color: focusMode ? theme.primary : theme.subtext, fontSize: 13, fontWeight: '600' }}>🎯 Focus</Text>
+              </TouchableOpacity>
+            </View>
+
             {/* Carry-over banner */}
             {tasks.some((t) => t.carriedOver && !t.completed) && (
               <View style={[styles.carryBanner, { borderColor: theme.primary + '40' }]}>
@@ -230,6 +278,7 @@ export default function HomeScreen({ navigation }) {
             onDelete={handleDelete}
             onPin={handlePin}
             onArchive={handleArchive}
+            onEdit={handleEdit}
           />
         )}
         ListEmptyComponent={
@@ -295,6 +344,8 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '700' },
   emptySubtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20, paddingHorizontal: 20 },
   doneLabel: { fontSize: 13, textAlign: 'center', marginTop: 16, fontStyle: 'italic' },
+  filterRow: { flexDirection: 'row', gap: 8, marginBottom: 12, flexWrap: 'wrap' },
+  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1 },
   fab: {
     position: 'absolute', bottom: 30, alignSelf: 'center',
     borderRadius: 30, paddingVertical: 14, paddingHorizontal: 32,

@@ -8,7 +8,7 @@ import { hapticComplete, hapticLight } from '../utils/haptics';
 const PRIORITY_COLORS = { high: '#FF4444', medium: '#FFAA00', low: '#44CC88' };
 const PRIORITY_LABELS = { high: '🔴 High', medium: '🟡 Medium', low: '🟢 Low' };
 
-export default function TaskItem({ task, onToggle, onDelete, onPin, onArchive }) {
+export default function TaskItem({ task, onToggle, onDelete, onPin, onArchive, onEdit }) {
   const theme = useContext(ThemeContext);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -122,6 +122,11 @@ export default function TaskItem({ task, onToggle, onDelete, onPin, onArchive })
 
       {/* Action buttons */}
       <View style={styles.actions}>
+        {onEdit && (
+          <TouchableOpacity onPress={() => onEdit(task.id)} style={styles.actionBtn}>
+            <Text style={{ color: theme.subtext, fontSize: 14 }}>✏️</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={handlePin} style={styles.actionBtn}>
           <Text style={{ color: task.pinned ? theme.primary : theme.subtext, fontSize: 14 }}>📌</Text>
         </TouchableOpacity>

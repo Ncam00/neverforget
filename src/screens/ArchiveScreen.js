@@ -4,7 +4,7 @@ import {
   SafeAreaView, Alert,
 } from 'react-native';
 import { ThemeContext } from '../../App';
-import { loadArchive, saveArchive } from '../utils/storage';
+import { loadArchive, saveArchive, loadTasks, saveTasks } from '../utils/storage';
 
 export default function ArchiveScreen() {
   const theme = useContext(ThemeContext);
@@ -13,6 +13,17 @@ export default function ArchiveScreen() {
   useEffect(() => {
     loadArchive().then(setArchive);
   }, []);
+
+  async function handleRestore(id) {
+    const task = archive.find((t) => t.id === id);
+    if (!task) return;
+    const updatedArchive = archive.filter((t) => t.id !== id);
+    setArchive(updatedArchive);
+    await saveArchive(updatedArchive);
+    const tasks = await loadTasks();
+    const restored = { ...task, archived: false, archivedAt: null, date: new Date().toDateString() };
+    await saveTasks([restored, ...tasks]);
+  }
 
   async function handleDelete(id) {
     Alert.alert('Remove from Archive', 'Permanently delete this task?', [
@@ -87,9 +98,14 @@ export default function ArchiveScreen() {
                 </Text>
               </View>
             </View>
-            <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteBtn}>
-              <Text style={{ color: theme.subtext, fontSize: 16 }}>✕</Text>
-            </TouchableOpacity>
+            <View style={styles.archiveActions}>
+              <TouchableOpacity onPress={() => handleRestore(item.id)} style={styles.restoreBtn}>
+                <Text style={{ color: theme.primary, fontSize: 12, fontWeight: '700' }}>↩ Restore</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteBtn}>
+                <Text style={{ color: theme.subtext, fontSize: 16 }}>✕</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
         ListEmptyComponent={
@@ -124,7 +140,9 @@ const styles = StyleSheet.create({
   note: { fontSize: 12, marginTop: 2 },
   meta: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   metaText: { fontSize: 11 },
-  deleteBtn: { padding: 6, marginLeft: 8 },
+  archiveActions: { flexDirection: 'column', alignItems: 'center', gap: 4, marginLeft: 8 },
+  restoreBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  deleteBtn: { padding: 6 },
   empty: { alignItems: 'center', paddingVertical: 60, gap: 12 },
   emptyTitle: { fontSize: 18, fontWeight: '700' },
   emptySubtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20, paddingHorizontal: 20 },

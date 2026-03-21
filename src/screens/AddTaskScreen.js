@@ -14,17 +14,22 @@ const PRIORITIES = [
 
 export default function AddTaskScreen({ navigation, route }) {
   const theme = useContext(ThemeContext);
-  const { onAdd } = route.params;
+  const { onAdd, onEdit, task: editTask } = route.params;
+  const isEditing = !!editTask;
 
-  const [title, setTitle] = useState('');
-  const [note, setNote] = useState('');
-  const [priority, setPriority] = useState(null);
-  const [reminderTime, setReminderTime] = useState(null);
-  const [dueDate, setDueDate] = useState(null);
+  const [title, setTitle] = useState(editTask?.title || '');
+  const [note, setNote] = useState(editTask?.note || '');
+  const [priority, setPriority] = useState(editTask?.priority || null);
+  const [reminderTime, setReminderTime] = useState(editTask?.reminderTime || null);
+  const [dueDate, setDueDate] = useState(editTask?.dueDate || null);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [pickerTime, setPickerTime] = useState(new Date());
-  const [pickerDate, setPickerDate] = useState(new Date());
+  const [pickerTime, setPickerTime] = useState(
+    editTask?.reminderTime
+      ? (() => { const d = new Date(); const [h, m] = editTask.reminderTime.split(':'); d.setHours(+h, +m); return d; })()
+      : new Date()
+  );
+  const [pickerDate, setPickerDate] = useState(editTask?.dueDate ? new Date(editTask.dueDate) : new Date());
 
   function formatTime(date) {
     return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
@@ -54,7 +59,9 @@ export default function AddTaskScreen({ navigation, route }) {
 
   function handleSave() {
     if (!title.trim()) { Alert.alert('Task name required', 'Please enter a task name.'); return; }
-    onAdd({ title: title.trim(), note: note.trim(), reminderTime, priority, dueDate });
+    const payload = { title: title.trim(), note: note.trim(), reminderTime, priority, dueDate };
+    if (isEditing) onEdit(payload);
+    else onAdd(payload);
     navigation.goBack();
   }
 
@@ -171,7 +178,7 @@ export default function AddTaskScreen({ navigation, route }) {
       </View>
 
       <TouchableOpacity style={[styles.saveBtn, { backgroundColor: T.primary }]} onPress={handleSave}>
-        <Text style={styles.saveBtnText}>Add Task</Text>
+        <Text style={styles.saveBtnText}>{isEditing ? 'Save Changes' : 'Add Task'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

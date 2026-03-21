@@ -56,7 +56,11 @@ export default function App() {
             }}
           >
             <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="AddTask" component={AddTaskScreen} options={{ title: 'New Task' }} />
+            <Stack.Screen
+              name="AddTask"
+              component={AddTaskScreen}
+              options={({ route }) => ({ title: route.params?.task ? 'Edit Task' : 'New Task' })}
+            />
             <Stack.Screen name="Weekly" component={WeeklyScreen} options={{ title: 'Weekly Summary' }} />
             <Stack.Screen name="Archive" component={ArchiveScreen} options={{ title: 'Archive' }} />
             <Stack.Screen name="Themes" component={ThemeScreen} options={{ title: 'Choose Theme' }} />

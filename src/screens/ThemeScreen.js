@@ -2,14 +2,22 @@ import React, { useContext } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView,
 } from 'react-native';
-import { ThemeContext, ThemeUpdateContext } from '../../App';
+import { ThemeContext, ThemeUpdateContext, ProContext } from '../../App';
 import { THEMES } from '../utils/themes';
+
+const FREE_THEMES = ['gold']; // only Black & Gold is free
 
 export default function ThemeScreen({ navigation }) {
   const theme = useContext(ThemeContext);
   const updateTheme = useContext(ThemeUpdateContext);
+  const isPro = useContext(ProContext);
 
   async function handleSelect(id) {
+    const requiresPro = !FREE_THEMES.includes(id);
+    if (requiresPro && !isPro) {
+      navigation.navigate('Pro');
+      return;
+    }
     await updateTheme(id);
     navigation.goBack();
   }
@@ -24,6 +32,8 @@ export default function ThemeScreen({ navigation }) {
 
         {Object.values(THEMES).map((t) => {
           const isActive = theme.id === t.id;
+          const locked = !FREE_THEMES.includes(t.id) && !isPro;
+
           return (
             <TouchableOpacity
               key={t.id}
@@ -32,6 +42,7 @@ export default function ThemeScreen({ navigation }) {
                 styles.card,
                 { backgroundColor: t.card, borderColor: isActive ? t.primary : t.border },
                 isActive && { borderWidth: 2 },
+                locked && { opacity: 0.65 },
               ]}
               activeOpacity={0.85}
             >
@@ -54,6 +65,11 @@ export default function ThemeScreen({ navigation }) {
                       <Text style={{ color: '#000', fontSize: 11, fontWeight: '700' }}>ACTIVE</Text>
                     </View>
                   )}
+                  {locked && (
+                    <View style={[styles.proBadge]}>
+                      <Text style={styles.proBadgeText}>✨ PRO</Text>
+                    </View>
+                  )}
                 </View>
                 <Text style={[styles.desc, { color: t.subtext }]}>{t.description}</Text>
 
@@ -64,9 +80,21 @@ export default function ThemeScreen({ navigation }) {
                   <View style={[styles.dot, { backgroundColor: t.card, borderColor: t.border, borderWidth: 1 }]} />
                 </View>
               </View>
+
+              {locked && <Text style={styles.lockIcon}>🔒</Text>}
             </TouchableOpacity>
           );
         })}
+
+        {!isPro && (
+          <TouchableOpacity
+            style={styles.upgradeBtn}
+            onPress={() => navigation.navigate('Pro')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.upgradeBtnText}>✨ Unlock All Themes — $3.99</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -89,10 +117,21 @@ const styles = StyleSheet.create({
   swatchCard: { borderRadius: 6, borderWidth: 1, padding: 6, gap: 4 },
   swatchLine: { height: 4, borderRadius: 2 },
   info: { flex: 1 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' },
   name: { fontSize: 16, fontWeight: '800' },
   activeBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  proBadge: {
+    backgroundColor: '#C4A000', paddingHorizontal: 6,
+    paddingVertical: 2, borderRadius: 6,
+  },
+  proBadgeText: { color: '#000', fontSize: 10, fontWeight: '800' },
   desc: { fontSize: 13, marginBottom: 10 },
   dots: { flexDirection: 'row', gap: 6 },
   dot: { width: 16, height: 16, borderRadius: 8 },
+  lockIcon: { fontSize: 18, marginLeft: 4 },
+  upgradeBtn: {
+    backgroundColor: '#C4A000', borderRadius: 14,
+    padding: 16, alignItems: 'center', marginTop: 8,
+  },
+  upgradeBtnText: { color: '#000', fontWeight: '800', fontSize: 15 },
 });

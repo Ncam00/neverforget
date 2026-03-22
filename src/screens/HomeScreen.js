@@ -9,7 +9,7 @@ import Logo from '../components/Logo';
 import TaskItem from '../components/TaskItem';
 import ElephantCelebration from '../components/ElephantCelebration';
 import NotificationPrompt from '../components/NotificationPrompt';
-import { ThemeContext } from '../../App';
+import { ThemeContext, ProContext } from '../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   loadTasks, saveTasks, carryOverTasks,
@@ -22,6 +22,7 @@ import {
 
 export default function HomeScreen({ navigation }) {
   const theme = useContext(ThemeContext);
+  const isPro = useContext(ProContext);
   const [tasks, setTasks] = useState([]);
   const [notifGranted, setNotifGranted] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -199,7 +200,7 @@ export default function HomeScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.navigate('Themes')} style={styles.topBtn}>
           <Text style={{ color: theme.primary, fontSize: 22 }}>🎨</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Archive')} style={styles.topBtn}>
+        <TouchableOpacity onPress={() => isPro ? navigation.navigate('Archive') : navigation.navigate('Pro')} style={styles.topBtn}>
           <Text style={{ color: theme.primary, fontSize: 22 }}>📦</Text>
         </TouchableOpacity>
       </View>
@@ -241,10 +242,10 @@ export default function HomeScreen({ navigation }) {
               {/* Weekly summary button */}
               <TouchableOpacity
                 style={[styles.weeklyBtn, { borderColor: theme.primary + '50' }]}
-                onPress={() => navigation.navigate('Weekly')}
+                onPress={() => isPro ? navigation.navigate('Weekly') : navigation.navigate('Pro')}
               >
                 <Text style={{ color: theme.primary, fontSize: 14, fontWeight: '700' }}>
-                  📊 Weekly Summary
+                  📊 Weekly Summary {!isPro && <Text style={{ fontSize: 11 }}>✨ PRO</Text>}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -260,16 +261,23 @@ export default function HomeScreen({ navigation }) {
                 <TouchableOpacity
                   key={f.key}
                   style={[styles.filterChip, { borderColor: filter === f.key ? theme.primary : theme.border, backgroundColor: filter === f.key ? theme.primary + '20' : 'transparent' }]}
-                  onPress={() => setFilter(filter === f.key && f.key !== 'all' ? 'all' : f.key)}
+                  onPress={() => {
+                    if (!isPro && f.key !== 'all') { navigation.navigate('Pro'); return; }
+                    setFilter(filter === f.key && f.key !== 'all' ? 'all' : f.key);
+                  }}
                 >
-                  <Text style={{ color: filter === f.key ? theme.primary : theme.subtext, fontSize: 13, fontWeight: '600' }}>{f.label}</Text>
+                  <Text style={{ color: filter === f.key ? theme.primary : theme.subtext, fontSize: 13, fontWeight: '600' }}>
+                    {f.label}{!isPro && f.key !== 'all' ? ' ✨' : ''}
+                  </Text>
                 </TouchableOpacity>
               ))}
               <TouchableOpacity
                 style={[styles.filterChip, { borderColor: focusMode ? theme.primary : theme.border, backgroundColor: focusMode ? theme.primary + '20' : 'transparent', marginLeft: 'auto' }]}
-                onPress={() => setFocusMode(!focusMode)}
+                onPress={() => isPro ? setFocusMode(!focusMode) : navigation.navigate('Pro')}
               >
-                <Text style={{ color: focusMode ? theme.primary : theme.subtext, fontSize: 13, fontWeight: '600' }}>🎯 Focus</Text>
+                <Text style={{ color: focusMode ? theme.primary : theme.subtext, fontSize: 13, fontWeight: '600' }}>
+                  🎯 Focus{!isPro ? ' ✨' : ''}
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -315,8 +323,8 @@ export default function HomeScreen({ navigation }) {
         }
       />
 
-      {/* Elephant celebration animation */}
-      <ElephantCelebration visible={showCelebration} />
+      {/* Elephant celebration animation — Pro only */}
+      <ElephantCelebration visible={isPro && showCelebration} />
 
       {/* Notification permission prompt */}
       <NotificationPrompt

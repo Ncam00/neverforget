@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Expo Web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:/Users/admin/.claude/start-expo-web.js"],
+      "port": 8081
+    }
+  ]
+}

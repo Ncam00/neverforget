@@ -40,8 +40,11 @@ export default function WeeklyScreen() {
       const data = await loadWeeklyData();
       setWeeklyData(data);
       const tasks = await loadTasks();
-      setTotalTasks(tasks.length);
-      setCompletedTasks(tasks.filter((t) => t.completed).length);
+      // Today's rate = only today's tasks (not already-completed-and-gone tasks)
+      const todayStr = new Date().toDateString();
+      const todayTasks = tasks.filter((t) => t.date === todayStr || t.carriedOver);
+      setTotalTasks(todayTasks.length);
+      setCompletedTasks(todayTasks.filter((t) => t.completed).length);
     })();
   }, []);
 

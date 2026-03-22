@@ -8,7 +8,9 @@ import { format } from 'date-fns';
 import Logo from '../components/Logo';
 import TaskItem from '../components/TaskItem';
 import ElephantCelebration from '../components/ElephantCelebration';
+import NotificationPrompt from '../components/NotificationPrompt';
 import { ThemeContext } from '../../App';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   loadTasks, saveTasks, carryOverTasks,
   loadArchive, saveArchive, recordCompletion,
@@ -25,18 +27,32 @@ export default function HomeScreen({ navigation }) {
   const [showCelebration, setShowCelebration] = useState(false);
   const [filter, setFilter] = useState('all'); // 'all' | 'high' | 'medium' | 'low'
   const [focusMode, setFocusMode] = useState(false);
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const prevAllDone = useRef(false);
 
   useEffect(() => {
     (async () => {
-      const granted = await registerForNotifications();
-      setNotifGranted(granted);
       const stored = await loadTasks();
       const carried = carryOverTasks(stored);
       setTasks(carried);
       await saveTasks(carried);
+      // Show notification prompt only if not yet asked
+      const asked = await AsyncStorage.getItem('notif_asked');
+      if (!asked) setShowNotifPrompt(true);
     })();
   }, []);
+
+  async function handleNotifAllow() {
+    setShowNotifPrompt(false);
+    await AsyncStorage.setItem('notif_asked', '1');
+    const granted = await registerForNotifications();
+    setNotifGranted(granted);
+  }
+
+  async function handleNotifSkip() {
+    setShowNotifPrompt(false);
+    await AsyncStorage.setItem('notif_asked', '1');
+  }
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', async (state) => {
@@ -301,6 +317,13 @@ export default function HomeScreen({ navigation }) {
 
       {/* Elephant celebration animation */}
       <ElephantCelebration visible={showCelebration} />
+
+      {/* Notification permission prompt */}
+      <NotificationPrompt
+        visible={showNotifPrompt}
+        onAllow={handleNotifAllow}
+        onSkip={handleNotifSkip}
+      />
 
       {/* Add Task FAB */}
       <TouchableOpacity

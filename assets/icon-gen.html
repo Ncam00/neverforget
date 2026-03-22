@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Icon Generator</title></head>
+<body style="margin:0;background:#000">
+<canvas id="icon" width="1024" height="1024"></canvas>
+<canvas id="splash" width="2048" height="2048"></canvas>
+<canvas id="adaptive" width="1024" height="1024"></canvas>
+<script>
+// ── ICON ──────────────────────────────────────────────────────────────────
+function drawElephant(ctx, ox, oy, scale, color) {
+  ctx.strokeStyle = color;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  function path(d, w) {
+    ctx.lineWidth = w * scale;
+    ctx.beginPath();
+    // tiny path parser for M/C/L commands
+    const cmds = d.trim().match(/[MCLZ][^MCLZ]*/g);
+    cmds.forEach(cmd => {
+      const type = cmd[0];
+      const nums = cmd.slice(1).trim().split(/[\s,]+/).map(Number);
+      if (type === 'M') ctx.moveTo(ox + nums[0]*scale, oy + nums[1]*scale);
+      else if (type === 'L') ctx.lineTo(ox + nums[0]*scale, oy + nums[1]*scale);
+      else if (type === 'C') {
+        for (let i=0;i<nums.length;i+=6)
+          ctx.bezierCurveTo(ox+nums[i]*scale,oy+nums[i+1]*scale,ox+nums[i+2]*scale,oy+nums[i+3]*scale,ox+nums[i+4]*scale,oy+nums[i+5]*scale);
+      }
+    });
+    ctx.stroke();
+  }
+
+  path('M 20 130 C 20 130 15 110 18 90 C 21 70 30 55 50 45 C 70 35 95 30 120 32 C 145 34 165 38 180 50 C 195 62 200 75 200 90 C 200 105 195 118 190 128', 4.5);
+  path('M 50 45 C 38 42 28 38 22 30 C 16 22 15 14 18 8 C 21 2 30 4 34 10 C 38 16 36 24 38 30 C 40 36 44 40 50 45', 4.5);
+  path('M 18 8 C 14 4 10 6 8 12 C 6 18 10 24 16 22', 4);
+  path('M 50 45 C 55 32 60 20 72 16 C 84 12 95 18 98 30 C 101 42 92 52 80 55 C 68 58 55 52 50 45', 4);
+  path('M 80 115 C 78 125 76 138 77 148', 4.5);
+  path('M 100 118 C 100 128 100 138 101 148', 4.5);
+  path('M 155 120 C 153 130 151 140 152 148', 4.5);
+  path('M 175 116 C 175 126 176 136 177 148', 4.5);
+  path('M 200 90 C 208 88 215 92 218 100 C 221 108 216 115 210 112', 3.5);
+  path('M 34 10 C 28 6 20 8 16 14 C 12 20 16 28 22 26', 3);
+}
+
+// ICON 1024x1024
+(function() {
+  const c = document.getElementById('icon');
+  const ctx = c.getContext('2d');
+  // Black background
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, 1024, 1024);
+  // Gold glow
+  ctx.shadowColor = '#C4A000';
+  ctx.shadowBlur = 18;
+  // Draw elephant centred, scaled to ~680px wide (240 viewBox units → 680px = scale 2.83)
+  const s = 3.5;
+  const vw = 240 * s, vh = 156 * s;
+  const ox = (1024 - vw) / 2;
+  const oy = (1024 - vh) / 2 - 30;
+  drawElephant(ctx, ox, oy, s, '#C4A000');
+  ctx.shadowBlur = 0;
+
+  // "NEVERFORGET" text below
+  ctx.fillStyle = '#C4A000';
+  ctx.font = 'bold 72px Arial';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '8px';
+  ctx.fillText('NEVERFORGET', 512, 820);
+
+  window._iconData = c.toDataURL('image/png').split(',')[1];
+  console.log('icon ready, length=' + window._iconData.length);
+})();
+
+// SPLASH 2048x2048
+(function() {
+  const c = document.getElementById('splash');
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, 2048, 2048);
+  ctx.shadowColor = '#C4A000';
+  ctx.shadowBlur = 30;
+  const s = 5.5;
+  const vw = 240 * s, vh = 156 * s;
+  const ox = (2048 - vw) / 2;
+  const oy = 700;
+  drawElephant(ctx, ox, oy, s, '#C4A000');
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#C4A000';
+  ctx.font = 'bold 110px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('NEVERFORGET', 1024, 1520);
+  ctx.fillStyle = '#888';
+  ctx.font = '52px Arial';
+  ctx.fillText('An elephant never forgets', 1024, 1610);
+  window._splashData = c.toDataURL('image/png').split(',')[1];
+  console.log('splash ready, length=' + window._splashData.length);
+})();
+
+// ADAPTIVE ICON (foreground on transparent)
+(function() {
+  const c = document.getElementById('adaptive');
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 1024, 1024);
+  ctx.shadowColor = '#C4A000';
+  ctx.shadowBlur = 14;
+  const s = 3.2;
+  const vw = 240 * s, vh = 156 * s;
+  const ox = (1024 - vw) / 2;
+  const oy = (1024 - vh) / 2 - 20;
+  drawElephant(ctx, ox, oy, s, '#C4A000');
+  window._adaptiveData = c.toDataURL('image/png').split(',')[1];
+  console.log('adaptive ready, length=' + window._adaptiveData.length);
+})();
+</script>
+</body>
+</html>
